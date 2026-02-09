@@ -5,10 +5,12 @@ from langgraph.graph.message import add_messages
 from langchain.chat_models import init_chat_model
 from typing_extensions import TypedDict
 from pydantic import BaseModel, Field
+from web_operations import serp_search,reddit_search_api,reddit_post_retrieval
+from prompts import PromptTemplates, get_google_analysis_messages, get_bing_analysis_messages, get_reddit_analysis_messages, get_synthesis_messages,get_reddit_url_analysis_messages
 
 load_dotenv()
 
-llm = init_chat_model("deepseek-ai/deepseek-v3.2")
+llm = init_chat_model("meta/llama-3.1-8b-instruct", model_provider="nvidia")
 
 class State(TypedDict):
     messages: Annotated[list, add_messages]        #this is the message usually send into the graph to process and getting information from coming up with an answer to the user query
@@ -24,43 +26,133 @@ class State(TypedDict):
     final_answer: str | None = None                      #this is the final answer that we can use to answer the user query, it is optional because we can also use the messages to get the final answer
 
 
+
+class RedditURLAnalysis(BaseModel):
+    selected_urls: List[str] = Field(description="List of Reddit URLs that contain valuable information for answering the user's question")
+
+
 def google_search(state:State):
     user_question = state.get("user_qestion","")
     print(f"Performing Google search for: {user_question}")
-    google_result=[]
+    google_result=serp_search(user_question,engine="google")
+    print(f"\n\nGoogle search results: {google_result}")
     return {"google_results": google_result}
 
 def bing_search(state:State):
     user_question = state.get("user_qestion","")
     print(f"Performing Bing search for: {user_question}")
-    bing_result=[]
+    bing_result= serp_search(user_question,engine="bing")
+    print(f"\n\nBing search results: {bing_result}")
     return {"bing_results": bing_result} 
 
 def reddit_search(state:State):
     user_question = state.get("user_qestion","")
     print(f"Performing Reddit search for: {user_question}")
-    reddit_result=[]
+    reddit_result=reddit_search_api(user_question)
+    print(f"\n\nReddit search results: {reddit_result}")
     return {"reddit_results": reddit_result}
 
 
-def analyse_reddit_posts(state:State):
-    return {"selected_reddut_urls":[]   }
+def analyze_reddit_posts(state:State):
+    user_question = state.get("user_question", "")
+    reddit_results = state.get("reddit_results", "")
 
-def retreive_reddit_post_data(state:State):
-    return {"reddit_post_data":[]}
+    if not reddit_results:
+        return {"selected_reddit_urls": []}
+
+    structured_llm = llm.with_structured_output(RedditURLAnalysis)
+    messages = get_reddit_url_analysis_messages(user_question, reddit_results)
+
+    try:
+        analysis = structured_llm.invoke(messages)
+        selected_urls = analysis.selected_urls
+
+        print("Selected URLs:")
+        for i, url in enumerate(selected_urls, 1):
+            print(f"   {i}. {url}")
+
+    except Exception as e:
+        print(e)
+        selected_urls = []
+
+    return {"selected_reddit_urls": selected_urls}
+
+def retrieve_reddit_post_data(state:State):
+    print("Getting reddit post comments")
+
+    selected_urls = state.get("selected_reddit_urls", [])
+
+    if not selected_urls:
+        return {"reddit_post_data": []}
+
+    print(f"Processing {len(selected_urls)} Reddit URLs")
+
+    reddit_post_data = reddit_post_retrieval(selected_urls)
+
+    if reddit_post_data:
+        print(f"Successfully got {len(reddit_post_data)} posts")
+    else:
+        print("Failed to get post data")
+        reddit_post_data = []
+
+    print(reddit_post_data)
+    return {"reddit_post_data": reddit_post_data}
 
 
-def analyse_google_results(state:State):
-    return {"google_analysis":""}
+def analyze_google_results(state: State):
+    print("Analyzing google search results")
 
-def analyse_bing_results(state:State):
-    return {"bing_analysis":""}
+    user_question = state.get("user_question", "")
+    google_results = state.get("google_results", "")
 
-def analyse_reddit_results(state:State):
-    return {"reddit_analysis":""}
+    messages = get_google_analysis_messages(user_question, google_results)
+    reply = llm.invoke(messages)
 
-def synthesize_final_answer(state:State):
-    return {"final_answer":""}
+    return {"google_analysis": reply.content}
+
+
+def analyze_bing_results(state: State):
+    print("Analyzing bing search results")
+
+    user_question = state.get("user_question", "")
+    bing_results = state.get("bing_results", "")
+
+    messages = get_bing_analysis_messages(user_question, bing_results)
+    reply = llm.invoke(messages)
+
+    return {"bing_analysis": reply.content}
+
+
+def analyze_reddit_results(state: State):
+    print("Analyzing reddit search results")
+
+    user_question = state.get("user_question", "")
+    reddit_results = state.get("reddit_results", "")
+    reddit_post_data = state.get("reddit_post_data", "")
+
+    messages = get_reddit_analysis_messages(user_question, reddit_results, reddit_post_data)
+    reply = llm.invoke(messages)
+
+    return {"reddit_analysis": reply.content}
+
+
+def synthesize_analyses(state: State):
+    print("Combine all results together")
+
+    user_question = state.get("user_question", "")
+    google_analysis = state.get("google_analysis", "")
+    bing_analysis = state.get("bing_analysis", "")
+    reddit_analysis = state.get("reddit_analysis", "")
+
+    messages = get_synthesis_messages(
+        user_question, google_analysis, bing_analysis, reddit_analysis
+    )
+
+    reply = llm.invoke(messages)
+    final_answer = reply.content
+
+    return {"final_answer": final_answer, "messages": [{"role": "assistant", "content": final_answer}]}
+
 
 
 
@@ -69,12 +161,12 @@ graph_builder= StateGraph(State)
 graph_builder.add_node("google_search", google_search)
 graph_builder.add_node("bing_search", bing_search)
 graph_builder.add_node("reddit_search", reddit_search)
-graph_builder.add_node("analyse_reddit_posts", analyse_reddit_posts)
-graph_builder.add_node("retrieve_reddit_post_data", retreive_reddit_post_data)
-graph_builder.add_node("analyse_google_results", analyse_google_results)
-graph_builder.add_node("analyse_bing_results", analyse_bing_results)
-graph_builder.add_node("analyse_reddit_results", analyse_reddit_results)
-graph_builder.add_node("synthesize_final_answer", synthesize_final_answer)
+graph_builder.add_node("analyze_reddit_posts", analyze_reddit_posts)
+graph_builder.add_node("retrieve_reddit_post_data", retrieve_reddit_post_data)
+graph_builder.add_node("analyze_google_results", analyze_google_results)
+graph_builder.add_node("analyze_bing_results", analyze_bing_results)
+graph_builder.add_node("analyze_reddit_results", analyze_reddit_results)
+graph_builder.add_node("synthesize_final_answer", synthesize_analyses)
 
 
 '''connect nodes''' 
@@ -86,19 +178,19 @@ graph_builder.add_edge(START, "reddit_search")
 
 #we connect with reddit post analysis and data retrieval because we want to get the reddit post data and analyse it before we move to the final answer synthesis step
 #until reddit post ready others are wating
-graph_builder.add_edge("google_search", "analyse_reddit_posts")
-graph_builder.add_edge("bing_search", "analyse_reddit_posts")
-graph_builder.add_edge("reddit_search", "analyse_reddit_posts")
-graph_builder.add_edge("analyse_reddit_posts", "retrieve_reddit_post_data")
+graph_builder.add_edge("google_search", "analyze_reddit_posts")
+graph_builder.add_edge("bing_search", "analyze_reddit_posts")
+graph_builder.add_edge("reddit_search", "analyze_reddit_posts")
+graph_builder.add_edge("analyze_reddit_posts", "retrieve_reddit_post_data")
 
 
-graph_builder.add_edge("retrieve_reddit_post_data", "analyse_google_results")
-graph_builder.add_edge("retrieve_reddit_post_data", "analyse_bing_results")
-graph_builder.add_edge("retrieve_reddit_post_data", "analyse_reddit_results")
+graph_builder.add_edge("retrieve_reddit_post_data", "analyze_google_results")
+graph_builder.add_edge("retrieve_reddit_post_data", "analyze_bing_results")
+graph_builder.add_edge("retrieve_reddit_post_data", "analyze_reddit_results")
 
-graph_builder.add_edge("analyse_google_results", "synthesize_final_answer")
-graph_builder.add_edge("analyse_bing_results", "synthesize_final_answer")
-graph_builder.add_edge("analyse_reddit_results", "synthesize_final_answer")
+graph_builder.add_edge("analyze_google_results", "synthesize_final_answer")
+graph_builder.add_edge("analyze_bing_results", "synthesize_final_answer")
+graph_builder.add_edge("analyze_reddit_results", "synthesize_final_answer")
 
 graph_builder.add_edge("synthesize_final_answer", END)
 
