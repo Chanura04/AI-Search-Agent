@@ -12,21 +12,23 @@ load_dotenv()
 
 llm = init_chat_model("meta/llama-3.1-8b-instruct", model_provider="nvidia")
 
+'''agent's working memory'''
 class State(TypedDict):
-    messages: Annotated[list, add_messages]        #this is the message usually send into the graph to process and getting information from coming up with an answer to the user query
-    user_qestion:str | None = None                      #this is the user query that we want to answer, it is optional because we can also use the messages to get the user query
-    google_results: list | None = None                     #this is the google search results that we can use to answer the user query, it is optional because we can also use the messages to get the google search results
-    bing_results: list | None = None                      #this is the bing search results that we can use to answer the user query, it is optional because we can also use the messages to get the bing search results
-    reddit_results: list | None = None                    #this is the reddit search results that we can use to answer the user query, it is optional because we can also use the messages to get the reddit search results
-    selected_reddut_urls: list[str] | None = None          #this is the selected reddit urls that we can use to answer the user query, it is optional because we can also use the messages to get the selected reddit urls
-    reddit_post_data: list | None = None                      #this is the reddit post data that we can use to answer the user query, it is optional because we can also use the messages to get the reddit post data
-    google_analysis: str | None = None                      #this is the google search results analysis that we can use to answer the user query, it is optional because we can also use the messages to get the google search results analysis
-    bing_analysis: str | None = None                       #this is the bing search results analysis that we can use to answer the user query, it is optional because we can also use the messages to
-    reddit_analysis: str | None = None                    #this is the reddit search results analysis that we can use to answer the user query, it is optional because we can also use the messages to get the reddit search results analysis   
-    final_answer: str | None = None                      #this is the final answer that we can use to answer the user query, it is optional because we can also use the messages to get the final answer
+    messages: Annotated[list, add_messages]                 # Conversation history
+    user_qestion:str | None = None                          # Current user query
+    google_results: list | None = None                      # Raw Google search results
+    bing_results: list | None = None                        # Raw Bing search results
+    reddit_results: list | None = None                      # Raw Reddit search results
+    selected_reddut_urls: list[str] | None = None           # URLs chosen for deeper analysis
+    reddit_post_data: list | None = None                    # Detailed Reddit post content
+    google_analysis: str | None = None                      # Analyzed Google insights
+    bing_analysis: str | None = None                        # Analyzed Bing insights
+    reddit_analysis: str | None = None                      # Analyzed Reddit insights
+    final_answer: str | None = None                         # Final synthesized answer to user question
 
 
 
+'''structured output for reddit url analysis'''
 class RedditURLAnalysis(BaseModel):
     selected_urls: List[str] = Field(description="List of Reddit URLs that contain valuable information for answering the user's question")
 
@@ -59,7 +61,9 @@ def analyze_reddit_posts(state:State):
 
     if not reddit_results:
         return {"selected_reddit_urls": []}
+    
 
+    '''get structured output for reddit url analysis'''
     structured_llm = llm.with_structured_output(RedditURLAnalysis)
     messages = get_reddit_url_analysis_messages(user_question, reddit_results)
 
@@ -76,6 +80,11 @@ def analyze_reddit_posts(state:State):
         selected_urls = []
 
     return {"selected_reddit_urls": selected_urls}
+
+
+'''
+    Fetches full post content and comments from the selected Reddit URLs
+                                                                            '''
 
 def retrieve_reddit_post_data(state:State):
     print("Getting reddit post comments")
@@ -181,6 +190,7 @@ graph_builder.add_edge(START, "reddit_search")
 graph_builder.add_edge("google_search", "analyze_reddit_posts")
 graph_builder.add_edge("bing_search", "analyze_reddit_posts")
 graph_builder.add_edge("reddit_search", "analyze_reddit_posts")
+
 graph_builder.add_edge("analyze_reddit_posts", "retrieve_reddit_post_data")
 
 
@@ -188,6 +198,7 @@ graph_builder.add_edge("retrieve_reddit_post_data", "analyze_google_results")
 graph_builder.add_edge("retrieve_reddit_post_data", "analyze_bing_results")
 graph_builder.add_edge("retrieve_reddit_post_data", "analyze_reddit_results")
 
+'''concurently analyze all three sources and then move to final synthesis step'''
 graph_builder.add_edge("analyze_google_results", "synthesize_final_answer")
 graph_builder.add_edge("analyze_bing_results", "synthesize_final_answer")
 graph_builder.add_edge("analyze_reddit_results", "synthesize_final_answer")

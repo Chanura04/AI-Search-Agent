@@ -1,8 +1,6 @@
 # AI Search Agent
 
-An intelligent research assistant that aggregates and synthesizes information from **Google**, **Bing**, and **Reddit** to answer complex queries.
-
-Powered by **LangGraph** for orchestration, **Llama 3.1** (via NVIDIA) for reasoning, and **BrightData** for web data retrieval.
+This AI Search Agent is a sophisticated research assistant that aggregates and synthesizes real-time information from Google, Bing, and Reddit to answer complex user queries. Built on LangGraph, it orchestrates parallel search workflows and employs Llama 3.1 (via NVIDIA NIM) to reason through data and generate comprehensive, cited responses. The system features deep Reddit integration to retrieve and analyze community discussions, ensuring a balance of factual data and human insights. Users can interact via a responsive Streamlit web interface , with all search data efficiently cached in MongoDB for persistence and performance.
 
 ## 🌟 Features
 
@@ -17,6 +15,15 @@ Powered by **LangGraph** for orchestration, **Llama 3.1** (via NVIDIA) for reaso
   - **CLI**: Terminal-based interaction for quick lookups.
 - **Data Persistence**: Caches search results and comments in MongoDB.
 
+## 💻 Technologies
+
+- **Language**: Python 3.10+
+- **Orchestration**: LangGraph, LangChain
+- **AI Model**: Llama 3.1 (via NVIDIA NIM)
+- **Data Retrieval**: BrightData (SERP API & Datasets)
+- **Database**: MongoDB
+- **Frontend**: Streamlit
+
 ## 📋 Prerequisites
 
 - **Python 3.10+**
@@ -29,7 +36,7 @@ Powered by **LangGraph** for orchestration, **Llama 3.1** (via NVIDIA) for reaso
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/Chanura04/AI-Search-Agent.git
    cd AI-Search-Agent
    ```
 
