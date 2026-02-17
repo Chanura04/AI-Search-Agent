@@ -2,6 +2,18 @@
 
 This AI Search Agent is a sophisticated research assistant that aggregates and synthesizes real-time information from Google, Bing, and Reddit to answer complex user queries. Built on LangGraph, it orchestrates parallel search workflows and employs Llama 3.1 (via NVIDIA NIM) to reason through data and generate comprehensive, cited responses. The system features deep Reddit integration to retrieve and analyze community discussions, ensuring a balance of factual data and human insights. Users can interact via a responsive Streamlit web interface , with all search data efficiently cached in MongoDB for persistence and performance.
 
+---
+
+[![Watch the video](https://img.youtube.com/vi/5eb6b6wb-Jk/0.jpg)](https://www.youtube.com/watch?v=5eb6b6wb-Jk)
+
+
+---
+
+
+![Logo](flow.png)
+
+
+
 ## 🌟 Features
 
 - **Parallel Multi-Source Search**: Simultaneously queries Google, Bing, and Reddit.
@@ -32,12 +44,7 @@ This AI Search Agent is a sophisticated research assistant that aggregates and s
   - BrightData (for SERP API and Datasets).
   - NVIDIA NIM (for Llama 3.1).
 
----
 
-[![Watch the video](https://img.youtube.com/vi/5eb6b6wb-Jk/0.jpg)](https://www.youtube.com/watch?v=5eb6b6wb-Jk)
-
-
----
 
 ## 🛠️ Installation
 
