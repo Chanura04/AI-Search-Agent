@@ -108,7 +108,7 @@ def retrieve_reddit_post_data(state:State):
     return {"reddit_post_data": reddit_post_data}
 
 
-def analyze_google_results(state: State):
+def analyze_google_results(state: State): 
     print("Analyzing google search results")
 
     user_question = state.get("user_question", "")
@@ -243,4 +243,4 @@ def run_chatbot():
 
 
 if __name__ == "__main__":
-    run_chatbot()
+    run_chatbot() 

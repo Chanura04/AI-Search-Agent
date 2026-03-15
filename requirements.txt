@@ -3,4 +3,4 @@ langgraph
 langchain-openai
 python-dotenv
 langchain-deepseek
-langchain-nvidia-ai-endpoints
+langchain-nvidia-ai-endpoints 

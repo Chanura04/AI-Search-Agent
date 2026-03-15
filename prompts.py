@@ -28,7 +28,7 @@ class PromptTemplates:
 
 
 
-    @staticmethod
+    @staticmethod 
     def google_analysis_system() -> str:
         """System prompt for analyzing Google search results."""
         return """You are an expert research analyst. Analyze the provided Google search results to extract key insights that answer the user's question.

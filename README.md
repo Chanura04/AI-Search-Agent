@@ -6,8 +6,8 @@ This AI Search Agent is a sophisticated research assistant that aggregates and s
 ## System Demostration
 
 
-[![Watch the video](https://img.youtube.com/vi/5eb6b6wb-Jk/0.jpg)](https://www.youtube.com/watch?v=5eb6b6wb-Jk)
-
+[![Watch the video](https://img.youtube.com/vi/5eb6b6wb-Jk/0.jpg)](https://www.youtube.com/watch?v=5eb6b6wb-Jk) 
+ 
 
 ---
 

@@ -283,7 +283,7 @@ def main():
             It analyzes and synthesizes information from all sources 
             to provide comprehensive, well-rounded answers.
             """
-        )
+        ) 
         
         st.divider()
         
