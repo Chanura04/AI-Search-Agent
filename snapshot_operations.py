@@ -6,7 +6,6 @@ from typing import List, Dict, Any, Optional
 
 load_dotenv() 
 
-
 def poll_snapshot_status(
     snapshot_id: str, max_attempts: int = 10, delay: int = 5
 ) -> bool:

@@ -17,8 +17,6 @@
 # print("Final Answer:")
 # print(reply.content)
 
-
-
     # return {"final_answer": final_answer, "messages": [{"role": "assistant", "content": final_answer}]}
 
 from pymongo import MongoClient 

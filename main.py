@@ -27,7 +27,6 @@ class State(TypedDict):
     final_answer: str | None = None                         # Final synthesized answer to user question
 
 
-
 '''structured output for reddit url analysis'''
 class RedditURLAnalysis(BaseModel):
     selected_urls: List[str] = Field(description="List of Reddit URLs that contain valuable information for answering the user's question")

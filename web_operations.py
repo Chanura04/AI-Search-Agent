@@ -84,7 +84,6 @@ def serp_search(query, engine="google"):
     )
     return extracted_data
 
-
 def _trigger_and_download_snapshot(trigger_url, params, data, operation_name="operation"):
     trigger_result = _make_api_request(trigger_url, params=params, json=data)
     if not trigger_result:
